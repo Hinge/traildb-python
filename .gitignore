@@ -7,4 +7,5 @@ include/
 lib/
 pip-selfcheck.json
 /.idea/
+/share/
 
