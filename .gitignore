@@ -1,3 +1,9 @@
 *~
 /build/
 *.pyc
+.Python
+bin/
+include/
+lib/
+pip-selfcheck.json
+
