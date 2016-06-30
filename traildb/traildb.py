@@ -1,6 +1,7 @@
 import os
 import sys
-
+from builtins import int
+from past.builtins import basestring, xrange
 from collections import namedtuple, defaultdict
 from collections import Mapping
 from ctypes import c_char, c_char_p, c_ubyte, c_int, c_void_p
@@ -99,7 +100,7 @@ def nullterm(strs, size):
 
 def tdb_item_is32(item): return not (item & 128)
 def tdb_item_field32(item): return item & 127
-def tdb_item_val32(item): return (item >> 8) & 4294967295L # UINT32_MAX
+def tdb_item_val32(item): return (item >> 8) & int(4294967295) # UINT32_MAX
 
 def tdb_item_field(item):
     """Return field-part of an item."""
