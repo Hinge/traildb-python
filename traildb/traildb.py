@@ -1,14 +1,14 @@
 import os
 import sys
-from builtins import int
+import codecs
+from builtins import int, bytes
 from past.builtins import basestring, xrange
-from collections import namedtuple, defaultdict
-from collections import Mapping
+from collections import namedtuple
 from ctypes import c_char, c_char_p, c_ubyte, c_int, c_void_p
-from ctypes import c_uint, c_uint8, c_uint32, c_uint64
+from ctypes import c_uint32, c_uint64
 from ctypes import Structure
-from ctypes import CDLL, CFUNCTYPE, POINTER, pointer
-from ctypes import byref, cast, string_at, addressof
+from ctypes import CDLL, POINTER, pointer
+from ctypes import string_at, addressof
 from datetime import datetime
 import time
 
@@ -21,6 +21,7 @@ if os.name == "posix" and sys.platform == "darwin":
 elif os.name == "posix" and "linux" in sys.platform:
     lib = CDLL('libtraildb.so')
 
+
 def api(fun, args, res=None):
     fun.argtypes = args
     fun.restype = res
@@ -32,6 +33,7 @@ tdb_val     = c_uint64
 tdb_item    = c_uint64
 tdb_cursor  = c_void_p
 tdb_error   = c_int
+
 
 class tdb_event(Structure):
     _fields_ = [("timestamp", c_uint64),
@@ -81,15 +83,13 @@ api(lib.tdb_get_trail, [tdb_cursor, c_uint64], tdb_error)
 api(lib.tdb_get_trail_length, [tdb_cursor], c_uint64)
 
 
-def uuid_hex(uuid):
-    if isinstance(uuid, basestring):
-        return uuid
-    return string_at(uuid, 16).encode('hex')
+def uuid_hex(uuid: str):
+    return string_at(uuid, 16)
 
-def uuid_raw(uuid):
-    if isinstance(uuid, basestring):
-        return (c_ubyte * 16).from_buffer_copy(uuid.decode('hex'))
-    return uuid
+
+def uuid_raw(uuid: str):
+    return (c_ubyte * 16).from_buffer_copy(uuid.encode())
+
 
 def nullterm(strs, size):
     return '\x00'.join(strs) + (size - len(strs) + 1) * '\x00'
@@ -98,9 +98,18 @@ def nullterm(strs, size):
 # Port of tdb_item_field and tdb_item_val in tdb_types.h. Cannot use
 # them directly as they are inlined functions.
 
-def tdb_item_is32(item): return not (item & 128)
-def tdb_item_field32(item): return item & 127
-def tdb_item_val32(item): return (item >> 8) & int(4294967295) # UINT32_MAX
+def tdb_item_is32(item):
+    return not (item & 128)
+
+
+def tdb_item_field32(item):
+    return item & 127
+
+
+def tdb_item_val32(item):
+    # UINT32_MAX
+    return (item >> 8) & int(4294967295)
+
 
 def tdb_item_field(item):
     """Return field-part of an item."""
@@ -109,6 +118,7 @@ def tdb_item_field(item):
     else:
         return (item & 127) | (((item >> 8) & 127) << 7)
 
+
 def tdb_item_val(item):
     """Return value-part of an item."""
     if tdb_item_is32(item):
@@ -116,14 +126,16 @@ def tdb_item_val(item):
     else:
         return item >> 16
 
+
 class TrailDBError(Exception):
     """TrailDB error condition."""
     pass
 
+
 class TrailDBConstructor(object):
     """Construct a new TrailDB."""
 
-    def __init__(self, path, ofields=()):
+    def __init__(self, path: str, ofields=()):
         """Initialize a new TrailDB constructor.
 
         path -- TrailDB output path (without .tdb).
@@ -133,7 +145,14 @@ class TrailDBConstructor(object):
             raise TrailDBError("Path is required")
         n = len(ofields)
 
-        ofield_names = (c_char_p * n)(*[name for name in ofields])
+        if not isinstance(path, bytes):
+            path = path.encode()
+
+        ofields = [
+            name if isinstance(name, bytes) else name.encode()
+            for name in ofields
+        ]
+        ofield_names = (c_char_p * n)(*ofields)
 
         self._cons = lib.tdb_cons_init()
         if lib.tdb_cons_open(self._cons, path, ofield_names, n) != 0:
@@ -146,7 +165,7 @@ class TrailDBConstructor(object):
         if hasattr(self, '_cons'):
             lib.tdb_cons_close(self._cons)
 
-    def add(self, uuid, tstamp, values):
+    def add(self, uuid: str, tstamp: datetime, values: [str]):
         """Add an event in TrailDB.
 
         uuid -- UUID of this event.
@@ -156,10 +175,10 @@ class TrailDBConstructor(object):
         if isinstance(tstamp, datetime):
             tstamp = int(time.mktime(tstamp.timetuple()))
         n = len(self.ofields)
+        values = [v.encode() for v in values]
         value_array = (c_char_p * n)(*values)
         value_lengths = (c_uint64 * n)(*[len(v) for v in values])
-        f = lib.tdb_cons_add(self._cons, uuid_raw(uuid), tstamp, value_array,
-                             value_lengths)
+        f = lib.tdb_cons_add(self._cons, uuid_raw(uuid), tstamp, value_array, value_lengths)
         if f:
             raise TrailDBError("Too many values: %s" % values[f])
 
@@ -172,7 +191,7 @@ class TrailDBConstructor(object):
         if f < 0:
             raise TrailDBError("Wrong number of fields: %d" % db.num_fields)
         if f > 0:
-            raise TrailDBError("Too many values: %s" % values[f])
+            raise TrailDBError("Too many values: %s" % f)
 
     def finalize(self):
         """Finalize this TrailDB. You cannot add new events in this TrailDB
@@ -208,6 +227,9 @@ class TrailDBCursor(object):
     def __iter__(self):
         return self
 
+    def __next__(self):
+        return self.next()
+
     def next(self):
         """Return the next event in the trail."""
         event = lib.tdb_cursor_next(self.cursor)
@@ -226,6 +248,7 @@ class TrailDBCursor(object):
             return self.cls(timestamp, *(self.valuefun(item) for item in items))
         else:
             return self.cls(timestamp, *items)
+
 
 class TrailDB(object):
     """Query a TrailDB.
@@ -379,4 +402,3 @@ class TrailDB(object):
     def max_timestamp(self):
         """Return the maximum time stamp of this TrailDB."""
         return lib.tdb_max_timestamp(self._db)
-
