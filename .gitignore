@@ -8,4 +8,5 @@ lib/
 pip-selfcheck.json
 /.idea/
 /share/
-
+/testtrail/
+/tmp*/
