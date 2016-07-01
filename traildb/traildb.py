@@ -83,11 +83,11 @@ api(lib.tdb_get_trail, [tdb_cursor, c_uint64], tdb_error)
 api(lib.tdb_get_trail_length, [tdb_cursor], c_uint64)
 
 
-def uuid_hex(uuid: str):
+def uuid_hex(uuid):
     return string_at(uuid, 16)
 
 
-def uuid_raw(uuid: str):
+def uuid_raw(uuid):
     return (c_ubyte * 16).from_buffer_copy(uuid.encode())
 
 
@@ -135,7 +135,7 @@ class TrailDBError(Exception):
 class TrailDBConstructor(object):
     """Construct a new TrailDB."""
 
-    def __init__(self, path: str, ofields=()):
+    def __init__(self, path, ofields=()):
         """Initialize a new TrailDB constructor.
 
         path -- TrailDB output path (without .tdb).
@@ -165,7 +165,7 @@ class TrailDBConstructor(object):
         if hasattr(self, '_cons'):
             lib.tdb_cons_close(self._cons)
 
-    def add(self, uuid: str, tstamp: datetime, values: [str]):
+    def add(self, uuid, tstamp, values):
         """Add an event in TrailDB.
 
         uuid -- UUID of this event.
