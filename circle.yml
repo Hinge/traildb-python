@@ -28,5 +28,5 @@ test:
     - coverage xml
     - mkdir -p $CIRCLE_TEST_REPORTS
     - cp pep8.log $CIRCLE_ARTIFACTS/pep8.log
-    - find junit-results-*.xml -exec cp {} $CIRCLE_TEST_REPORTS/ \;
+    - find junit-results.xml -exec cp {} $CIRCLE_TEST_REPORTS/ \;
     - coveralls --ignore-errors

@@ -1,0 +1,5 @@
+[pep8]
+ignore = E402
+max-line-length = 160
+
+# E402: module level import not at top of file
