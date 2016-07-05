@@ -21,7 +21,7 @@ class TestAPI(unittest.TestCase):
         os.unlink('testtrail.tdb')
 
     def test_trails(self):
-        db = TrailDB(b'testtrail')
+        db = TrailDB('testtrail')
         self.assertEqual(db.num_trails, 1)
 
         trail = db.trail(0)
@@ -36,7 +36,7 @@ class TestAPI(unittest.TestCase):
             self.assertTrue(hasattr(event, 'field2'))
 
     def test_crumbs(self):
-        db = TrailDB(b'testtrail.tdb')
+        db = TrailDB('testtrail.tdb')
 
         n = 0
         for uuid, trail in db.trails():
@@ -51,24 +51,24 @@ class TestAPI(unittest.TestCase):
         self.assertTrue(os.path.exists('testtrail.tdb'))
         self.assertFalse(os.path.exists('testtrail'))
 
-        TrailDB(b'testtrail.tdb')
-        TrailDB(b'testtrail')
+        TrailDB('testtrail.tdb')
+        TrailDB('testtrail')
 
         with self.assertRaises(TrailDBError):
-            TrailDB(b'foo.tdb')
+            TrailDB('foo.tdb')
 
     def test_fields(self):
-        db = TrailDB(b'testtrail')
+        db = TrailDB('testtrail')
         self.assertEqual(['time', 'field1', 'field2'], db.fields)
 
     def test_uuids(self):
-        db = TrailDB(b'testtrail')
+        db = TrailDB('testtrail')
         self.assertEqual(0, db.get_trail_id(self.uuid))
         self.assertEqual(self.uuid.encode(), db.get_uuid(0))
         self.assertTrue(self.uuid in db)
 
     def test_lexicons(self):
-        db = TrailDB(b'testtrail')
+        db = TrailDB('testtrail')
 
         # First field
         self.assertEqual(4, db.lexicon_size(1))
@@ -82,7 +82,7 @@ class TestAPI(unittest.TestCase):
             db.lexicon(3)
 
     def test_metadata(self):
-        db = TrailDB(b'testtrail.tdb')
+        db = TrailDB('testtrail.tdb')
         self.assertEqual(1, db.min_timestamp())
         self.assertEqual(3, db.max_timestamp())
         self.assertEqual((1, 3), db.time_range())
