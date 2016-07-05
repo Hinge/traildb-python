@@ -17,7 +17,7 @@ def add_event(cons, uuid, tstamp, user, ip, title):
     cons.add(uuid, tstamp, (user, ip, title))
     num_events += 1
     if not num_events & 1023:
-        print '%d events added' % num_events
+        print('%d events added' % num_events)
 
 def parse(cons, fileobj):
     for line in fileobj:
@@ -39,12 +39,12 @@ def parse(cons, fileobj):
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print 'Usage: parse_wikipedia_history.py enwiki-20160501-stub-meta-history.xml.gz wikipedia-history.tdb'
+        print('Usage: parse_wikipedia_history.py enwiki-20160501-stub-meta-history.xml.gz wikipedia-history.tdb')
         sys.exit(1)
 
     cons = traildb.TrailDBConstructor(sys.argv[2],
                                       ['user', 'ip', 'title'])
     parse(cons, gzip.GzipFile(sys.argv[1]))
-    print 'Done adding %d events!' % num_events
+    print('Done adding %d events!' % num_events)
     cons.finalize()
-    print 'Success!'
+    print('Success!')
