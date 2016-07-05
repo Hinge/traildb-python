@@ -1,6 +1,5 @@
 import os
 import sys
-import codecs
 from builtins import int, bytes
 from past.builtins import basestring, xrange
 from collections import namedtuple
@@ -15,7 +14,7 @@ import time
 if os.name == "posix" and sys.platform == "darwin":
     try:
         lib = CDLL('libtraildb.dylib')
-    except:
+    except Exception:
         # is there a better way to figure out the path?
         lib = CDLL('/usr/local/lib/libtraildb.dylib')
 elif os.name == "posix" and "linux" in sys.platform:
@@ -26,16 +25,16 @@ def api(fun, args, res=None):
     fun.argtypes = args
     fun.restype = res
 
-tdb         = c_void_p
-tdb_cons    = c_void_p
-tdb_field   = c_uint32
-tdb_val     = c_uint64
-tdb_item    = c_uint64
-tdb_cursor  = c_void_p
-tdb_error   = c_int
+tdb = c_void_p
+tdb_cons = c_void_p
+tdb_field = c_uint32
+tdb_val = c_uint64
+tdb_item = c_uint64
+tdb_cursor = c_void_p
+tdb_error = c_int
 
 
-class tdb_event(Structure):
+class TrailEvent(Structure):
     _fields_ = [("timestamp", c_uint64),
                 ("num_items", c_uint64),
                 ("items", POINTER(tdb_item))]
@@ -78,7 +77,7 @@ api(lib.tdb_version, [tdb], c_uint64)
 
 api(lib.tdb_cursor_new, [tdb], tdb_cursor)
 api(lib.tdb_cursor_free, [tdb])
-api(lib.tdb_cursor_next, [tdb_cursor], POINTER(tdb_event))
+api(lib.tdb_cursor_next, [tdb_cursor], POINTER(TrailEvent))
 api(lib.tdb_get_trail, [tdb_cursor, c_uint64], tdb_error)
 api(lib.tdb_get_trail_length, [tdb_cursor], c_uint64)
 
@@ -88,7 +87,8 @@ def uuid_hex(uuid):
 
 
 def uuid_raw(uuid):
-    return (c_ubyte * 16).from_buffer_copy(uuid.encode())
+    encoded = uuid if isinstance(uuid, bytes) else uuid.encode()
+    return (c_ubyte * 16).from_buffer_copy(encoded)
 
 
 def nullterm(strs, size):
@@ -148,18 +148,27 @@ class TrailDBConstructor(object):
         if not isinstance(path, bytes):
             path = path.encode()
 
-        ofields = [
-            name if isinstance(name, bytes) else name.encode()
-            for name in ofields
-        ]
-        ofield_names = (c_char_p * n)(*ofields)
+        print('ofields')
+        print(ofields)
+        encoded_ofields = []
+        for name in ofields:
+            if isinstance(name, bytes):
+                encoded_ofields.append(name)
+            else:
+                encoded_ofields.append(name.encode())
+        print('encoded_ofields')
+        print(encoded_ofields)
+        ofield_names = (c_char_p * n)(*encoded_ofields)
+
+        print('ofield_names')
+        print(ofield_names)
 
         self._cons = lib.tdb_cons_init()
         if lib.tdb_cons_open(self._cons, path, ofield_names, n) != 0:
             raise TrailDBError("Cannot open constructor")
 
         self.path = path
-        self.ofields = ofields
+        self.ofields = encoded_ofields
 
     def __del__(self):
         if hasattr(self, '_cons'):
@@ -175,9 +184,16 @@ class TrailDBConstructor(object):
         if isinstance(tstamp, datetime):
             tstamp = int(time.mktime(tstamp.timetuple()))
         n = len(self.ofields)
-        values = [v.encode() for v in values]
-        value_array = (c_char_p * n)(*values)
-        value_lengths = (c_uint64 * n)(*[len(v) for v in values])
+
+        encoded_values = []
+        for v in values:
+            if isinstance(v, bytes):
+                encoded_values.append(v)
+            else:
+                encoded_values.append(v.encode())
+
+        value_array = (c_char_p * n)(*encoded_values)
+        value_lengths = (c_uint64 * n)(*[len(v) for v in encoded_values])
         f = lib.tdb_cons_add(self._cons, uuid_raw(uuid), tstamp, value_array, value_lengths)
         if f:
             raise TrailDBError("Too many values: %s" % values[f])
@@ -263,6 +279,9 @@ class TrailDB(object):
     def __init__(self, path):
         """Open a TrailDB at path."""
         self._db = db = lib.tdb_init()
+        if not isinstance(path, bytes):
+            path = path.encode()
+
         res = lib.tdb_open(self._db, path)
         if res != 0:
             raise TrailDBError("Could not open %s, error code %d" % (path, res))
@@ -270,7 +289,7 @@ class TrailDB(object):
         self.num_trails = lib.tdb_num_trails(db)
         self.num_events = lib.tdb_num_events(db)
         self.num_fields = lib.tdb_num_fields(db)
-        self.fields = [lib.tdb_get_field_name(db, i) for i in xrange(self.num_fields)]
+        self.fields = [lib.tdb_get_field_name(db, i).decode() for i in xrange(self.num_fields)]
         self._event_cls = namedtuple('event', self.fields, rename=True)
         self._uint64_ptr = pointer(c_uint64())
 
