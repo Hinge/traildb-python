@@ -7,7 +7,10 @@ machine:
     version: 3.4.3
 
 dependencies:
+  cache_directories:
+    - "~/.apt-cache"
   pre:
+    - sudo rm -rf /var/cache/apt/archives && sudo ln -s ~/.apt-cache /var/cache/apt/archives && mkdir -p ~/.apt-cache/partial
     - sudo apt-get update
     - sudo apt-get install libarchive-dev libjudy-dev pkg-config
     - sudo curl -L -o traildb-0.5.zip https://github.com/traildb/traildb/archive/0.5.zip

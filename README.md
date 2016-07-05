@@ -1,5 +1,7 @@
 # Python bindings for TrailDB
 
+[![Coverage Status](https://coveralls.io/repos/github/Hinge/traildb-python/badge.svg?branch=master)](https://coveralls.io/github/Hinge/traildb-python?branch=master)
+
 ### Quick start
 
 First install the [TrailDB library](https://github.com/traildb/traildb). Then
