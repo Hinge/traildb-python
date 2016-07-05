@@ -83,7 +83,7 @@ api(lib.tdb_get_trail_length, [tdb_cursor], c_uint64)
 
 
 def uuid_hex(uuid):
-    return string_at(uuid, 16)
+    return string_at(uuid, 16).decode()
 
 
 def uuid_raw(uuid):

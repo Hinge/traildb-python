@@ -41,7 +41,7 @@ class TestAPI(unittest.TestCase):
         n = 0
         for uuid, trail in db.trails():
             n += 1
-            self.assertEqual(self.uuid.encode(), uuid)
+            self.assertEqual(self.uuid, uuid)
             self.assertIsInstance(trail, TrailDBCursor)
             self.assertEqual(3, len(list(trail)))
 
@@ -64,7 +64,7 @@ class TestAPI(unittest.TestCase):
     def test_uuids(self):
         db = TrailDB('testtrail')
         self.assertEqual(0, db.get_trail_id(self.uuid))
-        self.assertEqual(self.uuid.encode(), db.get_uuid(0))
+        self.assertEqual(self.uuid, db.get_uuid(0))
         self.assertTrue(self.uuid in db)
 
     def test_lexicons(self):
@@ -154,14 +154,14 @@ class TestCons(unittest.TestCase):
         tdb = cons.finalize()
 
         self.assertEqual(0, tdb.get_trail_id(self.uuid))
-        self.assertEqual(tdb.get_uuid(0), self.uuid.encode())
+        self.assertEqual(tdb.get_uuid(0), self.uuid)
         self.assertEqual(1, tdb.num_trails)
         self.assertEqual(2, tdb.num_events)
         self.assertEqual(3, tdb.num_fields)
 
         crumbs = list(tdb.trails())
         self.assertEqual(1, len(crumbs))
-        self.assertEqual(crumbs[0][0], self.uuid.encode())
+        self.assertEqual(crumbs[0][0], self.uuid)
         self.assertTrue(tdb[self.uuid])
         self.assertTrue(self.uuid in tdb)
         self.assertFalse('00000000000000000000000000000000' in tdb)
