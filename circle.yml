@@ -1,6 +1,6 @@
 machine:
   environment:
-    PATH: "$PATH:~/$CIRCLE_PROJECT_REPONAME/bin"
+    PATH: "$PATH:~/$CIRCLE_PROJECT_REPONAME/bin:/usr/local/lib/"
     ENV: ci
   python:
     version: 3.4.3
