@@ -72,10 +72,10 @@ class TestAPI(unittest.TestCase):
 
         # First field
         self.assertEqual(4, db.lexicon_size(1))
-        self.assertEqual([b'a', b'b', b'c'], list(db.lexicon(1)))
+        self.assertEqual(list(db.lexicon(1)), [b'a', b'b', b'c'])
 
         # Second field
-        self.assertEqual([b'1', b'2', b'3'], list(db.lexicon(2)))
+        self.assertEqual(list(db.lexicon(2)), [b'1', b'2', b'3'])
 
         with self.assertRaises(TrailDBError):
             # Out of bounds
@@ -214,7 +214,7 @@ class TestCons(unittest.TestCase):
 
     def test_append(self):
         cons = TrailDBConstructor('testtrail', ['field1'])
-        cons.add(self.uuid, 123, ['foobarbaz'])
+        cons.add(self.uuid, 125, ['foobarbaz'])
         tdb = cons.finalize()
 
         cons = TrailDBConstructor('testtrail2', ['field1'])
@@ -225,8 +225,8 @@ class TestCons(unittest.TestCase):
         self.assertEqual(2, tdb.num_events)
         uuid, trail = list(tdb.trails())[0]
         trail = list(trail)
-        self.assertEqual([123, 124], [e.time for e in trail])
-        self.assertEqual([b'foobarbaz', b'barquuxmoo'], [e.field1 for e in trail])
+        self.assertEqual([e.time for e in trail], [124, 125], )
+        self.assertEqual([e.field1 for e in trail], [b'barquuxmoo', b'foobarbaz'])
 
     def tearDown(self):
         try:
