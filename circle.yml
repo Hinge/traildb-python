@@ -1,0 +1,31 @@
+machine:
+  environment:
+    PATH: "$PATH:~/$CIRCLE_PROJECT_REPONAME/bin"
+    ENV: ci
+  python:
+    version: 3.4.3
+
+dependencies:
+  pre:
+    - sudo apt-get update
+    - sudo apt-get install libarchive-dev libjudy-dev pkg-config
+    - sudo curl -L -o traildb-0.5.zip https://github.com/traildb/traildb/archive/0.5.zip
+    - unzip traildb-0.5.zip
+    - sudo ./waf configure:
+        pwd: ./traildb-0.5
+    - sudo ./waf install:
+        pwd: ./traildb-0.5
+    - pip3 install -r requirements.txt
+    - pip3 install -r requirements-circle.txt
+
+test:
+  override:
+    - pep8 traildb | tee pep8.log || true
+    - coverage run --omit=lib --source=traildb /home/ubuntu/virtualenvs/venv-3.4.3/bin/nose2 -c unittest.cfg
+  post:
+    - coverage html
+    - coverage xml
+    - mkdir -p $CIRCLE_TEST_REPORTS
+    - cp pep8.log $CIRCLE_ARTIFACTS/pep8.log
+    - find junit-results-*.xml -exec cp {} $CIRCLE_TEST_REPORTS/ \;
+    - coveralls --ignore-errors

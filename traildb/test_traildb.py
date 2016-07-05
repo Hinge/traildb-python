@@ -3,8 +3,8 @@ import uuid
 import unittest
 import datetime
 
-from traildb import TrailDB, TrailDBConstructor, tdb_item_field, tdb_item_val
-from traildb import TrailDBError, TrailDBCursor
+from traildb.traildb import TrailDB, TrailDBConstructor, tdb_item_field, tdb_item_val
+from traildb.traildb import TrailDBError, TrailDBCursor
 
 
 class TestAPI(unittest.TestCase):
