@@ -3,8 +3,8 @@ import uuid
 import unittest
 import datetime
 
-from traildb.traildb import TrailDB, TrailDBConstructor, tdb_item_field, tdb_item_val
-from traildb.traildb import TrailDBError, TrailDBCursor
+from traildb.api import TrailDB, TrailDBConstructor, tdb_item_field, tdb_item_val
+from traildb.api import TrailDBError, TrailDBCursor
 
 
 class TestAPI(unittest.TestCase):
@@ -141,11 +141,11 @@ class TestCons(unittest.TestCase):
                           (events[0][0], events[-1][0]))
 
     def test_binarydata(self):
-        binary = '\x00\x01\x02\x00\xff\x00\xff'
+        binary = b'\x00\x01\x02\x00\xff\x00\xff'
         cons = TrailDBConstructor('testtrail', ['field1'])
         cons.add(self.uuid, 123, [binary])
         tdb = cons.finalize()
-        self.assertEqual(list(tdb[0])[0].field1, binary.encode())
+        self.assertEqual(list(tdb[0])[0].field1, binary)
 
     def test_cons(self):
         cons = TrailDBConstructor('testtrail', ['field1', 'field2'])

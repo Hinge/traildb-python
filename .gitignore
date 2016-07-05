@@ -10,3 +10,6 @@ pip-selfcheck.json
 /share/
 /testtrail/
 /tmp*/
+junit-results.xml
+.coverage
+
